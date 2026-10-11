@@ -32,7 +32,7 @@ Client IDs identify an application and are public. **Never paste a client secret
 
 1. Register an application in the [Twitch developer console](https://dev.twitch.tv/console/apps) with category **Website Integration**.
 2. Register this exact OAuth redirect URL: `https://thornbrambles.github.io/operation-hot-bunny/`.
-3. Copy its **Client ID** into the app's Twitch field. Enter the channel's login name, not its display name or full URL.
+3. This deployment already has its Twitch Client ID configured. Enter the channel's login name, not its display name or full URL. For your own fork, set `TWITCH_CLIENT_ID` in app.js to your registered app's public Client ID.
 4. Click **Connect Twitch** and authorize chat reading.
 
 The app uses Twitch's [browser OAuth flow](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/#implicit-grant-flow), validates the token and client ID, requests `chat:read`, and connects to [Twitch IRC over secure WebSocket](https://dev.twitch.tv/docs/chat/irc/). It validates active tokens hourly. A lost connection closes an open vote without advancing a winner; reconnect and start a new vote.
@@ -49,7 +49,7 @@ The app uses Google's [browser token model](https://developers.google.com/identi
 
 **End vote** waits for the final permitted YouTube poll so messages sent before the cutoff can be counted. This normally takes up to the polling interval plus network time. Votes sent after pressing End are excluded. If the final fetch fails, no automatic winner is selected.
 
-For a fork, replace the Twitch redirect and Google origin with your own Pages address. Public app client IDs can be entered by the host; the repository ships with no configured credentials.
+For a fork, replace the Twitch redirect and Google origin with your own Pages address. Public app client IDs can be entered by the host; the public Twitch client ID is configured in app.js; Google still needs its client ID.
 
 ## Pictures, saving, and backups
 
