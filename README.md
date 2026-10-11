@@ -32,7 +32,7 @@ Client IDs identify an application and are public. **Never paste a client secret
 
 1. Register an application in the [Twitch developer console](https://dev.twitch.tv/console/apps) with category **Website Integration**.
 2. Register this exact OAuth redirect URL: `https://thornbrambles.github.io/operation-hot-bunny/`.
-3. This deployment already has its Twitch Client ID configured. Enter the channel's login name, not its display name or full URL. For your own fork, set `TWITCH_CLIENT_ID` in app.js to your registered app's public Client ID.
+3. This deployment already has its Twitch Client ID configured. The app uses the signed-in Twitch account's channel automatically. For your own fork, set `TWITCH_CLIENT_ID` in app.js to your registered app's public Client ID.
 4. Click **Connect Twitch** and authorize chat reading.
 
 The app uses Twitch's [browser OAuth flow](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/#implicit-grant-flow), validates the token and client ID, requests `chat:read`, and connects to [Twitch IRC over secure WebSocket](https://dev.twitch.tv/docs/chat/irc/). It validates active tokens hourly. A lost connection closes an open vote without advancing a winner; reconnect and start a new vote.
@@ -43,7 +43,7 @@ The app uses Twitch's [browser OAuth flow](https://dev.twitch.tv/docs/authentica
 2. Configure the Google Auth Platform consent screen. For a personal project in testing, add her Google account as a test user. Publishing broadly may require Google's verification process.
 3. Create an OAuth client of type **Web application**. Add **Authorized JavaScript origin** `https://thornbrambles.github.io` (origins do not contain a path).
 4. This deployment already has its Google Client ID configured. For your own fork, set `GOOGLE_CLIENT_ID` in app.js to your registered app's public client ID ending in `.apps.googleusercontent.com`. No client secret is used.
-5. Paste the live YouTube video's URL, click **Connect YouTube**, and authorize read-only YouTube access. The stream needs an active live chat.
+5. Click **Connect YouTube** and sign in with the account for your streaming channel. The app finds its active broadcasts automatically. Start your stream first and enable live chat. If multiple streams are active, choose one from the picker that appears.
 
 The app uses Google's [browser token model](https://developers.google.com/identity/oauth2/web/guides/use-token-model) and reads [live chat messages](https://developers.google.com/youtube/v3/live/docs/liveChatMessages/list). It discards the initial chat history and polls subsequent pages no faster than every 10 seconds or the API's required interval, whichever is longer. Each chat-list request currently costs 5 quota units. YouTube is therefore slower than Twitch and is subject to your project's daily API quota. A quota error, expired authorization, or ended stream closes the vote without selecting a winner.
 

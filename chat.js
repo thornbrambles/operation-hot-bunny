@@ -10,10 +10,10 @@ export class TwitchChat {
   }
   async connect(token,clientId,channel) {
     this.disconnect();
-    channel=channel.trim().toLowerCase().replace(/^#/,'');
-    if(!/^[a-z0-9_]{1,25}$/.test(channel))throw Error('Enter a Twitch channel login.');
     this.onStatus('Connecting…');
     const user=await this.validate(token,clientId);
+    channel=(channel || user.login || '').trim().toLowerCase().replace(/^#/,'');
+    if(!/^[a-z0-9_]{1,25}$/.test(channel))throw Error('Twitch did not return a valid channel login.');
     const ws=new this.Socket('wss://irc-ws.chat.twitch.tv:443');this.ws=ws;
     const current=()=>this.ws===ws;
     this.timeout=setTimeout(()=>{if(current()&&!this.ready)this.fail('Twitch did not join the channel. Check its name and reconnect.');},15000);
@@ -43,6 +43,16 @@ export class YouTubeChat {
     const r=await this.fetcher(`https://www.googleapis.com/youtube/v3/${endpoint}?${new URLSearchParams(params)}`,{headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(15000)});
     if(!r.ok){const body=await r.json().catch(()=>({}));const reason=body.error?.errors?.[0]?.reason;throw Error(reason==='quotaExceeded'?'YouTube API quota exhausted. Try after its quota resets.':r.status===401?'YouTube sign-in expired. Connect again.':'YouTube could not read this live chat. Check the live video and API permissions.');}
     return r.json();
+  }
+  async broadcasts(token) {
+    const items=[];let pageToken='';
+    do {
+      const data=await this.request('liveBroadcasts',{part:'snippet',broadcastStatus:'active',broadcastType:'all',maxResults:50,...(pageToken?{pageToken}:{})},token);
+      items.push(...(data.items || []));pageToken=data.nextPageToken;
+    } while(pageToken);
+    const live=items.filter(item=>item.snippet?.liveChatId);
+    if(!live.length)throw Error('No active live chat found. Start your YouTube stream, then connect again using its channel account.');
+    return live;
   }
   async connect(token,url) {
     this.disconnect();const generation=this.generation;

@@ -14,3 +14,18 @@ test('YouTube discards initial history, tracks pagination and sends new messages
 test('YouTube quota errors stop polling and report actionable failure',async()=>{
   let error='';const y=new YouTubeChat({fetcher:async url=>url.includes('/videos?')?{ok:true,json:async()=>({items:[{liveStreamingDetails:{activeLiveChatId:'chat'}}]})}:{ok:false,status:403,json:async()=>({error:{errors:[{reason:'quotaExceeded'}]}})},onVote:()=>{},onStatus:()=>{},onFailure:s=>error=s});await y.connect('token','abcdefghijk');assert.equal(y.ready,false);assert.match(error,/quota/);y.disconnect();
 });
+
+test('Twitch automatically joins the signed-in account channel',async()=>{
+  let ws;class Socket{constructor(){ws=this;this.sent=[];}send(s){this.sent.push(s);}close(){}}
+  const t=new TwitchChat({Socket,fetcher:async()=>({ok:true,json:async()=>({client_id:'app',scopes:['chat:read'],login:'host'})}),onVote:()=>{},onStatus:()=>{},onFailure:()=>{}});
+  try{await t.connect('token','app');ws.onopen();assert.ok(ws.sent.some(s=>s.includes('JOIN #host')));}finally{t.disconnect();}
+});
+test('YouTube discovers active broadcasts across pages and excludes chats that are disabled',async()=>{
+  const calls=[];
+  const y=new YouTubeChat({fetcher:async url=>{const u=new URL(url);calls.push(u);return {ok:true,json:async()=>u.searchParams.has('pageToken')?{items:[{id:'second',snippet:{liveChatId:'chat2',title:'Second'}}]}:{nextPageToken:'next',items:[{id:'first',snippet:{liveChatId:'chat1',title:'First'}},{id:'disabled',snippet:{}}]}};},onVote:()=>{},onStatus:()=>{},onFailure:()=>{}});
+  assert.deepEqual((await y.broadcasts('token')).map(s=>s.id),['first','second']);assert.equal(calls[0].searchParams.get('broadcastStatus'),'active');assert.equal(calls[0].searchParams.get('broadcastType'),'all');assert.equal(calls[1].searchParams.get('pageToken'),'next');
+});
+test('YouTube explains when the account has no active live chat',async()=>{
+  const y=new YouTubeChat({fetcher:async()=>({ok:true,json:async()=>({items:[]})}),onVote:()=>{},onStatus:()=>{},onFailure:()=>{}});
+  await assert.rejects(y.broadcasts('token'),/Start your YouTube stream/);
+});
