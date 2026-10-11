@@ -12,6 +12,7 @@ test('Twitch and YouTube combine, repeated account votes replace instead of stac
 test('ties and no votes close without advancement',()=>{
   const t=new Tournament(roster(2));t.startVote(100);assert.equal(t.closeVote(),null);assert.equal(t.state.history.length,0);t.startVote(100);vote(t,'a',1);vote(t,'b',2);assert.equal(t.closeVote(),null);assert.equal(t.state.champion,null);
 });
+test('undo clears the winner presentation and old totals',()=>{const t=new Tournament(roster(4));t.startVote(100);vote(t,'a',1);t.closeVote();assert.equal(t.vote.winnerIndex,0);t.undo();assert.equal(t.vote.winnerIndex,undefined);assert.deepEqual(t.vote.counts,[0,0]);assert.deepEqual(t.state.pending,[0,1,2,3]);});
 test('closed, old, invalid, duplicate, reordered and after-cutoff messages do not contaminate vote',()=>{
   const t=new Tournament(roster(2));assert.equal(vote(t,'a',1),false);t.startVote(100);
   assert.equal(vote(t,'a',1,'twitch',99),false);assert.equal(vote(t,'',1),false);assert.equal(vote(t,'a','1 please'),false);

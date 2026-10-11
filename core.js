@@ -74,7 +74,7 @@ export class Tournament {
     return side;
   }
   cancelVote(reason = 'Vote cancelled. Start again when ready.') {
-    this.vote.open = false; this.vote.result = reason; this.voters.clear(); this.messages.clear();
+    this.vote.open = false; this.vote.result = reason; this.vote.counts = [0,0]; delete this.vote.winnerIndex; this.voters.clear(); this.messages.clear();
   }
   pick(side, cancel = true) {
     const s = this.state;
