@@ -3,6 +3,7 @@ import {load,save} from './storage.js';
 import {TwitchChat,YouTubeChat} from './chat.js';
 const $=id=>document.getElementById(id);
 const TWITCH_CLIENT_ID='n11ew2iinayq5sr7m3p5nt05upqdop';
+const GOOGLE_CLIENT_ID='1018097701593-qf5k30bio74hu8hrmhv740hqegngp4s6.apps.googleusercontent.com';
 const defaults=['Moon Bunny','Sun Bunny','Forest Bunny','Snow Bunny'].map(name=>({name,picture:'./bunny.svg'}));
 let tournament=new Tournament(defaults),lineup=structuredClone(defaults),imagesPending=0,ending=false,twitchToken='',saveChain=Promise.resolve(),demoMode=false;
 function notice(text){$('notice').textContent=text;}
@@ -11,7 +12,7 @@ function failure(text){if(tournament.vote.open){tournament.cancelVote('Chat inte
 function incoming(vote){if(!demoMode && tournament.cast(vote))renderStage();}
 const twitch=new TwitchChat({onVote:incoming,onStatus:t=>$('twitch-status').textContent=t,onFailure:failure});
 const youtube=new YouTubeChat({onVote:incoming,onStatus:t=>$('youtube-status').textContent=t,onFailure:failure});
-function config(){return {twitchClient:TWITCH_CLIENT_ID,channel:$('twitch-channel').value.trim(),googleClient:$('google-client').value.trim(),video:$('youtube-video').value.trim()};}
+function config(){return {twitchClient:TWITCH_CLIENT_ID,channel:$('twitch-channel').value.trim(),googleClient:GOOGLE_CLIENT_ID,video:$('youtube-video').value.trim()};}
 function saveConfig(){try{localStorage.setItem('ohb-settings',JSON.stringify(config()));}catch{notice('Browser settings could not be saved.');}}
 function renderStage(){
   const s=tournament.state,v=tournament.vote;
@@ -84,8 +85,8 @@ let googleScript;
 function google(){return googleScript ||= new Promise((resolve,reject)=>{if(window.google?.accounts?.oauth2)return resolve();const script=document.createElement('script');script.src='https://accounts.google.com/gsi/client';script.onload=()=>resolve();script.onerror=()=>{googleScript=null;reject(Error('Could not load Google sign-in. Check your network.'));};document.head.append(script);});}
 $('connect-youtube').onclick=safe(async()=>{saveConfig();const c=config();if(!c.googleClient)throw Error('Enter your Google app client ID. See the setup guide.');if(!c.video)throw Error('Enter your YouTube live video URL.');await google();window.google.accounts.oauth2.initTokenClient({client_id:c.googleClient,scope:'https://www.googleapis.com/auth/youtube.readonly',callback:async response=>{if(response.error)return notice('Google sign-in was cancelled or denied.');try{await youtube.connect(response.access_token,c.video);}catch(e){youtube.disconnect();notice(e.message);}},error_callback:()=>notice('Google sign-in was closed. Click Connect YouTube to try again.')}).requestAccessToken();});
 $('disconnect-youtube').onclick=()=>{if(youtube.ready)failure('YouTube disconnected.');youtube.disconnect();};
-for(const id of ['twitch-channel','google-client','youtube-video'])$(id).onchange=saveConfig;
-try{const c=JSON.parse(localStorage.getItem('ohb-settings')||'{}');for(const [id,key] of [['twitch-channel','channel'],['google-client','googleClient'],['youtube-video','video']])$(id).value=c[key]||'';}catch{}
+for(const id of ['twitch-channel','youtube-video'])$(id).onchange=saveConfig;
+try{const c=JSON.parse(localStorage.getItem('ohb-settings')||'{}');for(const [id,key] of [['twitch-channel','channel'],['youtube-video','video']])$(id).value=c[key]||'';}catch{}
 try{const data=await load();if(data){tournament=Tournament.restore(data.backup);lineup=data.lineup?.length<=32?data.lineup:structuredClone(tournament.state.entries);}$('save-status').textContent='Saved on this device';}catch(e){notice(e.message);$('save-status').textContent='Not saved';}
 renderRoster();renderStage();
 const params=new URLSearchParams(location.hash.slice(1));

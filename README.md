@@ -42,14 +42,14 @@ The app uses Twitch's [browser OAuth flow](https://dev.twitch.tv/docs/authentica
 1. Create/select a project in [Google Cloud Console](https://console.cloud.google.com/), then enable **YouTube Data API v3**.
 2. Configure the Google Auth Platform consent screen. For a personal project in testing, add her Google account as a test user. Publishing broadly may require Google's verification process.
 3. Create an OAuth client of type **Web application**. Add **Authorized JavaScript origin** `https://thornbrambles.github.io` (origins do not contain a path).
-4. Copy the client ID ending in `.apps.googleusercontent.com` into the app. No client secret is used.
+4. This deployment already has its Google Client ID configured. For your own fork, set `GOOGLE_CLIENT_ID` in app.js to your registered app's public client ID ending in `.apps.googleusercontent.com`. No client secret is used.
 5. Paste the live YouTube video's URL, click **Connect YouTube**, and authorize read-only YouTube access. The stream needs an active live chat.
 
 The app uses Google's [browser token model](https://developers.google.com/identity/oauth2/web/guides/use-token-model) and reads [live chat messages](https://developers.google.com/youtube/v3/live/docs/liveChatMessages/list). It discards the initial chat history and polls subsequent pages no faster than every 10 seconds or the API's required interval, whichever is longer. Each chat-list request currently costs 5 quota units. YouTube is therefore slower than Twitch and is subject to your project's daily API quota. A quota error, expired authorization, or ended stream closes the vote without selecting a winner.
 
 **End vote** waits for the final permitted YouTube poll so messages sent before the cutoff can be counted. This normally takes up to the polling interval plus network time. Votes sent after pressing End are excluded. If the final fetch fails, no automatic winner is selected.
 
-For a fork, replace the Twitch redirect and Google origin with your own Pages address. Public app client IDs can be entered by the host; the public Twitch client ID is configured in app.js; Google still needs its client ID.
+For a fork, replace the Twitch redirect and Google origin with your own Pages address. Both public app client IDs are configured in app.js. Replace them with your own registered application IDs when forking. No client secrets or access tokens are committed.
 
 ## Pictures, saving, and backups
 
